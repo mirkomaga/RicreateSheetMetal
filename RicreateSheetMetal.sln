@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30225.117
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RicreateSheetMetal", "RicreateSheetMetal\RicreateSheetMetal.csproj", "{CAF3E26E-0FF2-471D-B3AB-0F5F47DE9AA7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CAF3E26E-0FF2-471D-B3AB-0F5F47DE9AA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAF3E26E-0FF2-471D-B3AB-0F5F47DE9AA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAF3E26E-0FF2-471D-B3AB-0F5F47DE9AA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAF3E26E-0FF2-471D-B3AB-0F5F47DE9AA7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {90A1E55F-28F1-4EC3-B4BF-7AF4E5215C70}
+	EndGlobalSection
+EndGlobal
