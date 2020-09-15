@@ -86,16 +86,16 @@ namespace RicreateSheetMetal
                     }
 
                     // ! Cerco le lavorazioni
-                    IDictionary<Face, List<Lavorazione>> lavorazione = detectLavorazioni(oDoc);
+                    // IDictionary<Face, List<Lavorazione>> lavorazione = detectLavorazioni(oDoc);
 
                     // ! Creo sketch lavorazioni
-                    List<string>  nomeSketch = createSketchLavorazione(oDoc, lavorazione);
+                    // List<string>  nomeSketch = createSketchLavorazione(oDoc, lavorazione);
 
                     // ! Elimino con direct le lavorazioni
-                    deleteLavorazione(oDoc);
+                    // deleteLavorazione(oDoc);
 
                     // ! Cut lavorazione
-                    createCutLavorazione(oDoc, nomeSketch);
+                    // createCutLavorazione(oDoc, nomeSketch);
 
                     // ! Aggiungo piano nel mezzo
                     WorkPlane oWpReference = addPlaneInTheMiddleOfBox(oDoc);
@@ -116,7 +116,7 @@ namespace RicreateSheetMetal
                     setTexture(oDoc);
 
                     // ! Salvo il documento
-                    //oDoc.Save();
+                    oDoc.Save();
 
                     // ! Faccio lo sviluppo
                     bool sviluppoLamStatus = sviluppoLamiera(oDoc);
@@ -129,7 +129,7 @@ namespace RicreateSheetMetal
 
                     // ! Chiudo il documento
                     // ? oDoc.Close(true);
-                    oDoc.Close(true);
+                    oDoc.Close();
                 }
             }
 
@@ -418,76 +418,6 @@ namespace RicreateSheetMetal
 
             return result;
         }
-        public static void deleteLavorazione_REV(PartDocument oDoc)
-        {
-            SheetMetalComponentDefinition oCompDef = (SheetMetalComponentDefinition)oDoc.ComponentDefinition;
-            int numeroFacceTan = oCompDef.Bends.Count * 2;
-
-            NonParametricBaseFeature oBaseFeature = oCompDef.Features.NonParametricBaseFeatures[1];
-
-            oBaseFeature.Edit();
-
-            SurfaceBody basebody = oBaseFeature.BaseSolidBody;
-
-            foreach (Face f in basebody.Faces)
-            {
-                if(f.TangentiallyConnectedFaces.Count == numeroFacceTan)
-                {
-                    string nameFace = f.InternalName;
-
-                    ObjectCollection oColl = iApp.TransientObjects.CreateObjectCollection();
-
-                    List<string> listName = new List<string>();
-
-                    foreach (EdgeLoop oEdgeLoops in f.EdgeLoops)
-                    {
-                        Edges oEdges = oEdgeLoops.Edges;
-
-                        string lav = IdentificazioneEntita.whois(oEdges);
-
-                        if (!string.IsNullOrEmpty(lav))
-                        {
-                            Edge oEdge = oEdges[1];
-
-                            Faces oFaceColl = oEdge.Faces;
-
-                            foreach (Face oFaceLav in oFaceColl)
-                            {
-                                if (oFaceLav.InternalName != nameFace)
-                                {
-                                    if (!listName.Contains(oFaceLav.InternalName))
-                                    {
-                                        oColl.Add(oFaceLav);
-                                        listName.Add(oFaceLav.InternalName);
-                                    }
-                                    foreach (Face oFaceLavTang in oFaceLav.TangentiallyConnectedFaces)
-                                    {
-                                        if (!listName.Contains(oFaceLavTang.InternalName))
-                                        {
-                                            oColl.Add(oFaceLavTang);
-                                            listName.Add(oFaceLavTang.InternalName);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (oColl.Count > 0)
-                    {
-                        try
-                        {
-                            oBaseFeature.DeleteFaces(oColl);
-                        }
-                        catch
-                        {
-
-                        }
-                    }
-                }
-            }
-            oBaseFeature.ExitEdit();
-        }
         // ! Elimina le lavorazioni
         public static void deleteLavorazione(PartDocument oDoc)
         {
@@ -605,8 +535,9 @@ namespace RicreateSheetMetal
             {
                 WorkPlane tmpWp = oComp.WorkPlanes.AddByPlaneAndOffset(f, 0);
 
-                if (tmpWp.Plane.IsParallelTo[oComp.WorkPlanes[1].Plane])
-                {
+                //if (tmpWp.Plane.IsParallelTo[oComp.WorkPlanes[1].Plane])
+                if (tmpWp.Plane.IsParallelTo[oComp.WorkPlanes[3].Plane])
+                    {
                     oFaceColl.Add(f);
                 }
 
