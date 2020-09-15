@@ -16,7 +16,7 @@ namespace RicreateSheetMetal
     class RicompongoLamiera
     {
         public static Inventor.Application iApp = null;
-        public static void main(string path)
+        public static void main(string path, ToolStripProgressBar pb1, ToolStripStatusLabel tstl1, ListView lv1)
         {
             // ! Istanza inventor
             getIstance();
@@ -27,13 +27,21 @@ namespace RicreateSheetMetal
 
             int counter = 0;
 
+            pb1.Minimum = 0;
+            pb1.Maximum = listFiles.Length;
+
             // ! Ciclo la lista ipt dentro la folder
             foreach (string file in listFiles)
             {
                 counter++;
 
+                pb1.Value = counter;
+
                 if (System.IO.Path.GetExtension(file) == ".ipt")
                 {
+                    tstl1.Text = System.IO.Path.GetFileName(file);
+
+                    // ! Apro il documento
                     PartDocument oDoc = (PartDocument)iApp.Documents.Open(@file);
 
                     // ! Imposto SheetMetalDocument
@@ -44,15 +52,38 @@ namespace RicreateSheetMetal
 
                     // ! Elimino raggiature
                     List<string> faceCollToKeep = deleteFillet(oDoc);
+                    if (faceCollToKeep == null)
+                    {
 
-                    // ! Elimino facce
-                    deleteFace(oDoc, faceCollToKeep);
+                        ListViewItem item1 = new ListViewItem(System.IO.Path.GetFileName(file), 0);
+                        item1.SubItems.Add("Errore nell'eliminazione delle raggiature");
+                        lv1.Items.AddRange(new ListViewItem[] { item1 });
 
-                    // ! Creo Profilo
-                    createProfile(oDoc);
+                        //oDoc.Close();
+                        //continue;
+                    }
+                    else
+                    {
+                        // ! Elimino facce
+                        deleteFace(oDoc, faceCollToKeep);
 
-                    // ! Creo Raggiature
-                    createFillet(oDoc);
+                        // ! Creo Profilo
+                        bool profStatus = createProfile(oDoc);
+                        if (!profStatus)
+                        {
+
+                            ListViewItem item1 = new ListViewItem(System.IO.Path.GetFileName(file), 0);
+                            item1.SubItems.Add("Errore nella creazione profilo");
+                            lv1.Items.AddRange(new ListViewItem[] { item1 });
+
+                            //oDoc.Close();
+                            continue;
+                        }
+
+                        // ! Creo Raggiature
+                        createFillet(oDoc);
+
+                    }
 
                     // ! Cerco le lavorazioni
                     IDictionary<Face, List<Lavorazione>> lavorazione = detectLavorazioni(oDoc);
@@ -70,14 +101,54 @@ namespace RicreateSheetMetal
                     WorkPlane oWpReference = addPlaneInTheMiddleOfBox(oDoc);
 
                     // ! Aggiungo proiezione cut
-                    addProjectCut(oDoc, oWpReference);
+                    bool projCutStatus = addProjectCut(oDoc, oWpReference);
+                    if (!projCutStatus)
+                    {
+                        ListViewItem item1 = new ListViewItem(System.IO.Path.GetFileName(file), 0);
+                        item1.SubItems.Add("Errore nella creazione della proiezione cut");
+                        lv1.Items.AddRange(new ListViewItem[] { item1 });
+
+                        //oDoc.Close();
+                        continue;
+                    }
 
                     // ! Coloro lato bello
                     setTexture(oDoc);
 
                     // ! Salvo il documento
-                    oDoc.Close();
+                    //oDoc.Save();
+
+                    // ! Faccio lo sviluppo
+                    bool sviluppoLamStatus = sviluppoLamiera(oDoc);
+                    if (!sviluppoLamStatus)
+                    {
+                        ListViewItem item1 = new ListViewItem(System.IO.Path.GetFileName(file), 0);
+                        item1.SubItems.Add("Errore nella creazione dello sviluppo");
+                        lv1.Items.AddRange(new ListViewItem[] { item1 });
+                    }
+
+                    // ! Chiudo il documento
+                    // ? oDoc.Close(true);
+                    oDoc.Close(true);
                 }
+            }
+
+            MessageBox.Show("Procedimento completato", "Creator Sheet Metal");
+
+        }
+        // ! Creo lo sviluppo della lamiera
+        public static bool sviluppoLamiera(PartDocument oDoc)
+        {
+            SheetMetalComponentDefinition oCompDef = (SheetMetalComponentDefinition)oDoc.ComponentDefinition;
+
+            try
+            {
+                oCompDef.Unfold();
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
         // ! Controlla se inventor è già aperto, se no lo apre
@@ -206,8 +277,16 @@ namespace RicreateSheetMetal
                         }
                     }
                 }
-                oBaseFeature.DeleteFaces(oColl);
-                oBaseFeature.ExitEdit();
+                try
+                {
+                    oBaseFeature.DeleteFaces(oColl);
+                    oBaseFeature.ExitEdit();
+                }
+                catch
+                {
+                    oBaseFeature.ExitEdit();
+                    return null;
+                }
             }
 
             return faceCollToKeep;
@@ -231,7 +310,7 @@ namespace RicreateSheetMetal
             oFeat.DeleteFaceFeatures.Add(faceCollToDelete);
         }
         // ! Crea il profilo della superficie
-        public static void createProfile(PartDocument oDoc)
+        public static bool createProfile(PartDocument oDoc)
         {
             SheetMetalComponentDefinition oCompDef = (SheetMetalComponentDefinition)oDoc.ComponentDefinition;
 
@@ -244,7 +323,15 @@ namespace RicreateSheetMetal
 
             PartFeatures oFeat = oCompDef.Features;
 
-            oFeat.ThickenFeatures.Add(oFaceColl, Math.Round(oCompDef.Thickness.Value*100)/100, PartFeatureExtentDirectionEnum.kNegativeExtentDirection, PartFeatureOperationEnum.kJoinOperation, false);
+            try
+            {
+                oFeat.ThickenFeatures.Add(oFaceColl, Math.Round(oCompDef.Thickness.Value * 100) / 100, PartFeatureExtentDirectionEnum.kNegativeExtentDirection, PartFeatureOperationEnum.kJoinOperation, false);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
         // ! Ricrea le raggiature
         public static void createFillet(PartDocument oDoc)
@@ -498,6 +585,12 @@ namespace RicreateSheetMetal
         {
             SheetMetalComponentDefinition oComp = (SheetMetalComponentDefinition) oDoc.ComponentDefinition;
 
+            try
+            {
+                return oComp.WorkPlanes["Manual"];
+            }
+            catch { }
+
             Box oRb = oComp.SurfaceBodies[1].RangeBox;
 
             TransientBRep oTransientBRep = iApp.TransientBRep;
@@ -540,10 +633,10 @@ namespace RicreateSheetMetal
             return wpWork;
         }
         // ! Aggiunge le linee di taglio
-        public static void addProjectCut(PartDocument oDoc, WorkPlane oWpReference)
+        public static bool addProjectCut(PartDocument oDoc, WorkPlane oWpReference)
         {
             SheetMetalComponentDefinition oCompDef = (SheetMetalComponentDefinition)oDoc.ComponentDefinition;
-
+            
             WorkPlane oWpWork = oCompDef.WorkPlanes.AddByPlaneAndOffset(oWpReference, 0);
             oWpWork.Name = "wpWork";
             oWpWork.Visible = false;
@@ -597,7 +690,17 @@ namespace RicreateSheetMetal
                 bNaturalOffsetDir = false;
             }
 
-            SketchEntitiesEnumerator oSSketchEntitiesEnum = oSketch.OffsetSketchEntitiesUsingDistance(linea, 0.5, bNaturalOffsetDir, false);
+
+            try
+            {
+                SketchEntitiesEnumerator oSSketchEntitiesEnum = oSketch.OffsetSketchEntitiesUsingDistance(linea, 0.5, bNaturalOffsetDir, false);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+
             oProjectCut.Delete();
 
             styleSketch(oSketch.SketchEntities);
