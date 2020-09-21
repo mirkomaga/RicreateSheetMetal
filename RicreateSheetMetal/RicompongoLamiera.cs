@@ -136,6 +136,38 @@ namespace RicreateSheetMetal
             MessageBox.Show("Procedimento completato", "Creator Sheet Metal");
 
         }
+        public static void saveAllAsDxf(string path)
+        {
+            // ! Istanza inventor
+            getIstance();
+
+            // ! Tutti gli ipt dentro la folder
+            // ? oDoc = (PartDocument) iApp.ActiveDocument;
+            string[] listFiles = System.IO.Directory.GetFiles(@path, "*.ipt");
+
+            int counter = 0;
+
+            // ! Ciclo la lista ipt dentro la folder
+            foreach (string file in listFiles)
+            {
+                counter++;
+
+                if (System.IO.Path.GetExtension(file) == ".ipt")
+                {
+                    // ! Apro il documento
+                    PartDocument oDoc = (PartDocument)iApp.Documents.Open(@file);
+
+                    bool dxfStatus = saveDxf(path, oDoc);
+
+                    if (!dxfStatus)
+                    {
+                        Console.WriteLine("dasdsadsdas");
+                    }
+
+                    oDoc.Close(true);
+                } 
+            }
+        }
         // ! Creo lo sviluppo della lamiera
         public static bool sviluppoLamiera(PartDocument oDoc)
         {
@@ -872,6 +904,42 @@ namespace RicreateSheetMetal
             double dist = iApp.MeasureTools.GetMinimumDistance(origin, objects[2]) * 10;
 
             return dist;
+        }
+        // ! Salva una copia del flat pattern come dxf
+        public static bool saveDxf(string pathToSave, PartDocument oDoc)
+        {
+            //string sOut = "FLAT PATTERN DXF?AcadVersion=2004"
+            //    + "&TangentLinesLayer=IV_TANGENT&TangentLinesLayerColor=255;0;0";
+
+            string sOut = "FLAT PATTERN DXF?AcadVersion=2000" 
+                + "&OuterProfileLayer=OUTER_PROF&OuterProfileLayerColor=255;0;0" 
+                + "&InteriorProfilesLayer=INNER_PROFS&InteriorProfilesLayerColor=0;0;0" 
+                + "&FeatureProfileLayer=FEATURE&FeatureProfileLayerColor=0;0;0" 
+                + "&BendUpLayer=BEND_UP&BendUpLayerColor=0;255;0&BendUpLayerLineType=37634" 
+                + "&BendDownLayer=BEND_DOWN&BendDownLayerColor=0;255;0&BendDownLayerLineType=37634";
+
+            SheetMetalComponentDefinition oCompDef;
+            try
+            {
+                oCompDef = (SheetMetalComponentDefinition)oDoc.ComponentDefinition;
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (!oCompDef.HasFlatPattern)
+            {
+                return false;
+                throw new Exception("Non è presente il flat pattern!");
+            }
+
+            DataIO oDataIO = oCompDef.DataIO;
+
+            string dxfName = @pathToSave+ "\\" + oDoc.DisplayName + ".dxf";
+
+            oDataIO.WriteDataToFile(sOut, dxfName);
+            return true;
         }
     }
 }

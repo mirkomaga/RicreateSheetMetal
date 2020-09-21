@@ -15,6 +15,8 @@ namespace RicreateSheetMetal
         [STAThread]
         static void Main()
         {
+            RicompongoLamiera.saveAllAsDxf("X:\\Commesse\\NuovaSaf\\PDL\\Edificio_F");
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
