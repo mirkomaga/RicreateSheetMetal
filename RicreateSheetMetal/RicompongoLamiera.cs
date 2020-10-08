@@ -168,6 +168,7 @@ namespace RicreateSheetMetal
                 } 
             }
         }
+
         // ! Creo lo sviluppo della lamiera
         public static bool sviluppoLamiera(PartDocument oDoc)
         {
@@ -939,6 +940,65 @@ namespace RicreateSheetMetal
             string dxfName = @pathToSave+ "\\" + oDoc.DisplayName + ".dxf";
 
             oDataIO.WriteDataToFile(sOut, dxfName);
+            return true;
+        }
+
+        public static void saveAllAsDwg(string path)
+        {
+            // ! Istanza inventor
+            getIstance();
+
+            // ! Tutti gli ipt dentro la folder
+            // ? oDoc = (PartDocument) iApp.ActiveDocument;
+            string[] listFiles = System.IO.Directory.GetFiles(@path, "*.idw");
+
+            int counter = 0;
+
+            // ! Ciclo la lista ipt dentro la folder
+            foreach (string file in listFiles)
+            {
+                counter++;
+
+                if (System.IO.Path.GetExtension(file) == ".idw")
+                {
+                    // ! Apro il documento
+                    DrawingDocument oDoc = (DrawingDocument)iApp.Documents.Open(@file);
+
+                    bool dxfStatus = saveDwg(path, oDoc);
+
+                    if (!dxfStatus)
+                    {
+                        Console.WriteLine("dasdsadsdas");
+                    }
+
+                    oDoc.Close(true);
+                }
+            }
+        }
+        public static bool saveDwg(string pathToSave, DrawingDocument oDoc)
+        {
+            TranslatorAddIn DWGAddIn = (TranslatorAddIn) iApp.ApplicationAddIns.ItemById["{C24E3AC2-122E-11D5-8E91-0010B541CD80}"];
+
+            TranslationContext oContext = iApp.TransientObjects.CreateTranslationContext();
+            oContext.Type = IOMechanismEnum .kFileBrowseIOMechanism;
+
+            NameValueMap oOptions = iApp.TransientObjects.CreateNameValueMap();
+
+            DataMedium oDataMedium = iApp.TransientObjects.CreateDataMedium();
+
+            if (DWGAddIn.HasSaveCopyAsOptions[oDoc, oContext, oOptions])
+            {
+                string strIniFile = "C:\\Users\\edgesuser\\Desktop\\DWG-DXF\\test.ini";
+                oOptions.Value["Export_Acad_IniFile"] = strIniFile;
+                oOptions.Value["Sheet_Range"] = PrintRangeEnum.kPrintAllSheets;
+
+            }
+
+            oDataMedium.FileName = pathToSave+"\\"+ oDoc.DisplayName +".dwg";
+
+
+            DWGAddIn.SaveCopyAs(oDoc, oContext, oOptions, oDataMedium);
+
             return true;
         }
     }
