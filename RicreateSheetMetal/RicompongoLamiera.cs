@@ -943,6 +943,7 @@ namespace RicreateSheetMetal
             return true;
         }
 
+        // ! Converte IDW to DWG
         public static void saveAllAsDwg(string path)
         {
             // ! Istanza inventor
@@ -994,7 +995,7 @@ namespace RicreateSheetMetal
 
             }
 
-            oDataMedium.FileName = pathToSave+"\\"+ oDoc.DisplayName +".dwg";
+            oDataMedium.FileName = "C:\\Users\\edgesuser\\Desktop\\DWG-DXF\\"+ oDoc.DisplayName +".dwg";
 
 
             DWGAddIn.SaveCopyAs(oDoc, oContext, oOptions, oDataMedium);
