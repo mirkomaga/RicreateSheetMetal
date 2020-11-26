@@ -190,12 +190,12 @@ namespace RicreateSheetMetal
             try
             {
                 iApp = (Inventor.Application)System.Runtime.InteropServices.Marshal.GetActiveObject("Inventor.Application");
-                iApp.Visible = true;
+                iApp.Visible = false;
             }
             catch (System.Runtime.InteropServices.COMException e)
             {
                 iApp = (Inventor.Application)System.Activator.CreateInstance(System.Type.GetTypeFromProgID("Inventor.Application"));
-                iApp.Visible = true;
+                iApp.Visible = false;
             }
         }
         // ! Imposta documento ipt di tipo SheetMetal
@@ -995,12 +995,41 @@ namespace RicreateSheetMetal
 
             }
 
-            oDataMedium.FileName = "C:\\Users\\edgesuser\\Desktop\\DWG-DXF\\"+ oDoc.DisplayName +".dwg";
+            string[] oldName = System.Text.RegularExpressions.Regex.Split(oDoc.DisplayName, "\\.");
+
+
+            oDataMedium.FileName = "C:\\Users\\edgesuser\\Desktop\\DWG-DXF\\"+ oldName[0] + ".dwg";
 
 
             DWGAddIn.SaveCopyAs(oDoc, oContext, oOptions, oDataMedium);
 
             return true;
+        }
+        public static void readIprop()
+        {
+            getIstance();
+
+            string path = @"C:\Users\edgesuser\Desktop\OP\0102498";
+
+            string[] listFiles = System.IO.Directory.GetFiles(path, "*.ipt");
+
+            int counter = 0;
+
+            // ! Ciclo la lista ipt dentro la folder
+            foreach (string file in listFiles)
+            {
+                counter++;
+
+                if (System.IO.Path.GetExtension(file) == ".ipt")
+                {
+                    // ! Apro il documento
+                    Document oDoc = (Document)iApp.Documents.Open(@file);
+
+                    // TODO DA FARE
+
+                    oDoc.Close(true);
+                }
+            }
         }
     }
 }

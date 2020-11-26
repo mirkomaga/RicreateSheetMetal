@@ -15,7 +15,7 @@ namespace RicreateSheetMetal
         [STAThread]
         static void Main()
         {
-            RicompongoLamiera.saveAllAsDwg("X:\\Commesse\\Focchi\\160010 BPS\\07.Studi\\Marco\\BH\\05. EWS506\\Emissione Staffe EWS-506\\Emissione 02 - Cicli Pannelli\\Pack and go BH_EWS-506 - Cicli Pannelli_02 (05.10.2020)\\160010BPS_SANDWICHES_EWS506_Rev02\\_IDW\\_CICLIDACORREGGERETestMirko");
+            //RicompongoLamiera.saveAllAsDwg("X:\\Commesse\\Focchi\\160010 BPS\\07.Studi\\Marco\\BH\\05. EWS506\\Emissione Staffe EWS-506\\Emissione 02 - Cicli Pannelli\\Pack and go BH_EWS-506 - Cicli Pannelli_02 (05.10.2020)\\160010BPS_SANDWICHES_EWS506_Rev02\\_IDW\\_CICLIDACORREGGERETestMirko");
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
