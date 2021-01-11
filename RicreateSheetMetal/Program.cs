@@ -27,6 +27,7 @@ namespace RicreateSheetMetal
         {
             using (var fbd = new FolderBrowserDialog())
             {
+                fbd.SelectedPath = "X:\\Commesse\\Pisa\\91043 DUO\\iptTEST";
                 DialogResult result = fbd.ShowDialog();
 
                 if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))

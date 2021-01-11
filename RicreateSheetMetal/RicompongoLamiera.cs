@@ -49,6 +49,7 @@ namespace RicreateSheetMetal
 
                     // ! Imposto thickness
                     setThickness(oDoc);
+                    //setThicknessFisso(oDoc, "Steel DX51D THK 1.5mm");
 
                     // ! Elimino raggiature
                     List<string> faceCollToKeep = deleteFillet(oDoc);
@@ -80,27 +81,27 @@ namespace RicreateSheetMetal
                             continue;
                         }
 
-                        // ! Creo Raggiature
+                        //!Creo Raggiature
                         createFillet(oDoc);
 
                     }
 
-                    // ! Cerco le lavorazioni
-                    // IDictionary<Face, List<Lavorazione>> lavorazione = detectLavorazioni(oDoc);
+                    //!Cerco le lavorazioni
+                    //IDictionary<Face, List<Lavorazione>> lavorazione = detectLavorazioni(oDoc);
 
-                    // ! Creo sketch lavorazioni
-                    // List<string>  nomeSketch = createSketchLavorazione(oDoc, lavorazione);
+                    //!Creo sketch lavorazioni
+                    // List<string> nomeSketch = createSketchLavorazione(oDoc, lavorazione);
 
-                    // ! Elimino con direct le lavorazioni
-                    // deleteLavorazione(oDoc);
+                    //!Elimino con direct le lavorazioni
+                    //deleteLavorazione(oDoc);
 
-                    // ! Cut lavorazione
-                    // createCutLavorazione(oDoc, nomeSketch);
+                    //!Cut lavorazione
+                    //createCutLavorazione(oDoc, nomeSketch);
 
-                    // ! Aggiungo piano nel mezzo
+                    //!Aggiungo piano nel mezzo
                     WorkPlane oWpReference = addPlaneInTheMiddleOfBox(oDoc);
 
-                    // ! Aggiungo proiezione cut
+                    //!Aggiungo proiezione cut
                     bool projCutStatus = addProjectCut(oDoc, oWpReference);
                     if (!projCutStatus)
                     {
@@ -115,9 +116,6 @@ namespace RicreateSheetMetal
                     // ! Coloro lato bello
                     setTexture(oDoc);
 
-                    // ! Salvo il documento
-                    oDoc.Save();
-
                     // ! Faccio lo sviluppo
                     bool sviluppoLamStatus = sviluppoLamiera(oDoc);
                     if (!sviluppoLamStatus)
@@ -128,7 +126,18 @@ namespace RicreateSheetMetal
                     }
 
                     // ! Chiudo il documento
-                    // ? oDoc.Close(true);
+                    //oDoc.Close(true);
+
+                    // Nascondo Sketch esportazione template
+                    try
+                    {
+                        oDoc.ComponentDefinition.Sketches["EXP_ConvexHull"].Visible = false;
+                    }
+                    catch { }
+
+
+                    // ! Salvo il documento
+                    //oDoc.Save();
                     oDoc.Close();
                 }
             }
@@ -177,6 +186,7 @@ namespace RicreateSheetMetal
             try
             {
                 oCompDef.Unfold();
+                
                 return true;
             }
             catch
@@ -190,12 +200,12 @@ namespace RicreateSheetMetal
             try
             {
                 iApp = (Inventor.Application)System.Runtime.InteropServices.Marshal.GetActiveObject("Inventor.Application");
-                iApp.Visible = false;
+                iApp.Visible = true;
             }
             catch (System.Runtime.InteropServices.COMException e)
             {
                 iApp = (Inventor.Application)System.Activator.CreateInstance(System.Type.GetTypeFromProgID("Inventor.Application"));
-                iApp.Visible = false;
+                iApp.Visible = true;
             }
         }
         // ! Imposta documento ipt di tipo SheetMetal
@@ -214,7 +224,7 @@ namespace RicreateSheetMetal
 
             Face biggestFace = getBiggestFace(oDoc);
             
-            double thikness = Math.Round(getDistanceFromFace(biggestFace) * 100)/100;
+            double thikness = Math.Round(getDistanceFromFace(biggestFace) * 10)/10;
 
             string toSelect = null;
 
@@ -266,6 +276,23 @@ namespace RicreateSheetMetal
                 throw new Exception("Nessuno spessore trovato");
             }
         }
+
+        public static void setThicknessFisso(PartDocument oDoc, string parametro)
+        {
+            SheetMetalComponentDefinition oCompDef = (SheetMetalComponentDefinition)oDoc.ComponentDefinition;
+
+            string toSelect = parametro;
+
+            if (!string.IsNullOrEmpty(toSelect))
+            {
+                SheetMetalStyle oStyle = oCompDef.SheetMetalStyles[toSelect];
+                oStyle.Activate();
+            }
+            else
+            {
+                throw new Exception("Nessuno spessore trovato");
+            }
+        }
         // ! Colora entità con highlight set
         public static void coloroEntita(PartDocument oDoc, byte r, byte g, byte b, dynamic e)
         {
@@ -274,7 +301,7 @@ namespace RicreateSheetMetal
             oHS2.AddItem(e);
         }
         // ! Elimina tutti i fillet
-        public static List<string> deleteFillet(PartDocument oDoc)
+        public static List<string> deleteFillet_(PartDocument oDoc)
         {
             SheetMetalComponentDefinition oCompDef = (SheetMetalComponentDefinition)oDoc.ComponentDefinition;
             
@@ -320,6 +347,70 @@ namespace RicreateSheetMetal
                     oBaseFeature.ExitEdit();
                     return null;
                 }
+            }
+
+            return faceCollToKeep;
+        }
+
+        // ATTENZIONE NEL CASO CI FOSSERO LAVORAZIONI
+        public static List<string> deleteFillet(PartDocument oDoc)
+        {
+            SheetMetalComponentDefinition oCompDef = (SheetMetalComponentDefinition)oDoc.ComponentDefinition;
+
+            List<string> faceCollToKeep = new List<string>();
+
+            foreach (Face f in oCompDef.SurfaceBodies[1].Faces) {
+                if (f.SurfaceType == SurfaceTypeEnum.kCylinderSurface)
+                {
+                    faceCollToKeep.Add(f.InternalName);
+                }
+            }
+
+            //foreach(Face f in oCompDef.SurfaceBodies[1].Faces)
+            //{
+            //    if (f.SurfaceType == SurfaceTypeEnum.kCylinderSurface) {
+            //        foreach (Face ff in f.TangentiallyConnectedFaces)
+            //        {
+            //            if (ff.SurfaceType == SurfaceTypeEnum.kCylinderSurface)
+            //            {
+            //                coloroEntita(oDoc, 255, 0, 0, ff);
+            //                faceCollToKeep.Add(ff.InternalName);
+            //            }
+            //        }
+            //        coloroEntita(oDoc, 255, 0, 0, f);
+            //        faceCollToKeep.Add(f.InternalName);
+            //        break;
+            //    }
+            //}
+
+            NonParametricBaseFeature oBaseFeature = oCompDef.Features.NonParametricBaseFeatures[1];
+
+            oBaseFeature.Edit();
+
+            SurfaceBody basebody = oBaseFeature.BaseSolidBody;
+
+            ObjectCollection oColl = iApp.TransientObjects.CreateObjectCollection();
+
+            foreach (Face f in basebody.Faces)
+            {
+                if (faceCollToKeep.Contains(f.InternalName))
+                {
+                    if (f.SurfaceType == SurfaceTypeEnum.kCylinderSurface)
+                    {
+                        oColl.Add(f);
+                    }
+                }
+            }
+
+            try
+            {
+                oBaseFeature.DeleteFaces(oColl);
+                oBaseFeature.ExitEdit();
+            }
+            catch
+            {
+                oBaseFeature.ExitEdit();
+                return null;
             }
 
             return faceCollToKeep;
@@ -569,7 +660,7 @@ namespace RicreateSheetMetal
                 WorkPlane tmpWp = oComp.WorkPlanes.AddByPlaneAndOffset(f, 0);
 
                 //if (tmpWp.Plane.IsParallelTo[oComp.WorkPlanes[1].Plane])
-                if (tmpWp.Plane.IsParallelTo[oComp.WorkPlanes[3].Plane])
+                if (tmpWp.Plane.IsParallelTo[oComp.WorkPlanes[1].Plane])
                     {
                     oFaceColl.Add(f);
                 }
